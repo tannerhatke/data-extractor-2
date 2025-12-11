@@ -1,0 +1,447 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Data Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+        {
+          "imports": {
+            "@google/genai": "https://esm.sh/@google/genai@^1.33.0"
+          }
+        }
+    </script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body class="bg-blue-950 text-white font-sans">
+
+    <div id="app" class="min-h-screen flex flex-col items-center p-4 sm-p-6 lg:p-8">
+        <div class="w-full max-w-6xl mx-auto">
+            <header class="flex items-center justify-between mb-8">
+                <div class="flex items-center">
+                    <h1 class="text-2xl sm:text-3xl font-bold text-white">
+                        Image Data Extractor
+                    </h1>
+                </div>
+            </header>
+
+            <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="flex flex-col space-y-6">
+                    <div class="bg-slate-800 p-6 rounded-xl shadow-md border border-slate-700">
+                        <h2 class="text-xl font-semibold mb-4 text-white">Upload Image</h2>
+                        <label for="dropzone-file" id="dropzone-label" class="relative flex flex-col items-center justify-center w-full h-64 border-2 border-slate-600 border-dashed rounded-lg cursor-pointer bg-slate-700/50 hover:bg-slate-700">
+                            <img id="image-preview" src="#" alt="Image preview" class="hidden object-contain w-full h-full rounded-lg p-2" />
+                            <div id="dropzone-placeholder" class="flex flex-col items-center justify-center pt-5 pb-6 text-center">
+                                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16" class="w-10 h-10 mb-3 text-slate-400">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                                </svg>
+                                <p class="mb-2 text-sm text-slate-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                                <p class="text-xs text-slate-400">PNG, JPG, or WEBP</p>
+                            </div>
+                            <input id="dropzone-file" type="file" class="hidden" accept="image/png, image/jpeg, image/webp" />
+                        </label>
+                    </div>
+
+                    <div class="bg-slate-800 p-6 rounded-xl shadow-md border border-slate-700">
+                        <h2 class="text-xl font-semibold mb-4 text-white">Select Document Type</h2>
+                         <div>
+                            <label for="document-type-selector" class="block text-sm font-medium text-slate-300 mb-2">Document Type</label>
+                            <select id="document-type-selector" class="block w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-slate-700 disabled:cursor-not-allowed">
+                                <option value="" selected disabled>Select a type...</option>
+                                <option value="medical_records">Medical Records</option>
+                                <option value="prescription_refills">Prescription Refills</option>
+                                <option value="insurance">Insurance Card</option>
+                                <option value="claims">Claim Form</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="action-buttons" class="grid grid-cols-2 gap-4">
+                        <button id="extract-button" class="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-blue-700 disabled:bg-slate-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105">
+                            <!-- Spinner and text will be injected by JS -->
+                        </button>
+                        <button id="clear-button" class="flex items-center justify-center gap-2 bg-red-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-red-700 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors duration-300" aria-label="Clear uploaded image">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12.578 0h3.958c.328 0 .646.054.95.158m-4.908 0a48.067 48.067 0 013.478-.397m7.5 0a48.067 48.067 0 00-7.5 0" /></svg>
+                            Clear
+                        </button>
+                    </div>
+                    <div id="error-message" class="hidden bg-red-900/50 border-l-4 border-red-500 text-red-300 p-4 rounded-r-lg" role="alert">
+                        <p class="font-bold">Error</p>
+                        <p id="error-text"></p>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 p-6 rounded-xl shadow-md border border-slate-700">
+                    <h2 class="text-xl font-semibold mb-4 text-white">Verify & Upload Data</h2>
+                    <div id="form-container">
+                        <!-- Form or placeholder will be injected here -->
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+<script type="module">
+    import { GoogleGenAI, Type } from "@google/genai";
+
+    const API_KEY = process.env.API_KEY;
+    if (!API_KEY) {
+        showError("API_KEY environment variable is not set.");
+    }
+    const ai = new GoogleGenAI({ apiKey: API_KEY });
+
+    // --- DOM Elements ---
+    const fileInput = document.getElementById('dropzone-file');
+    const imagePreview = document.getElementById('image-preview');
+    const dropzonePlaceholder = document.getElementById('dropzone-placeholder');
+    const extractButton = document.getElementById('extract-button');
+    const clearButton = document.getElementById('clear-button');
+    const formContainer = document.getElementById('form-container');
+    const errorMessage = document.getElementById('error-message');
+    const errorText = document.getElementById('error-text');
+    const docTypeSelector = document.getElementById('document-type-selector');
+
+    let currentFile = null;
+    let selectedSchemaType = '';
+
+    // --- Data Schemas & Form Fields ---
+    const schemas = {
+        medical_records: {
+            type: Type.OBJECT,
+            properties: {
+                patientName: { type: Type.STRING, description: "Full name of the patient." },
+                dateOfBirth: { type: Type.STRING, description: "Patient's date of birth." },
+                recordDate: { type: Type.STRING, description: "Date the record was created." },
+                doctorName: { type: Type.STRING, description: "Name of the attending doctor or physician." },
+                diagnosis: { type: Type.STRING, description: "The primary diagnosis." },
+                notes: { type: Type.STRING, description: "Any additional notes or summary of the visit." },
+            },
+        },
+        prescription_refills: {
+            type: Type.OBJECT,
+            properties: {
+                patientName: { type: Type.STRING, description: "Full name of the patient." },
+                medicationName: { type: Type.STRING, description: "Name of the medication prescribed." },
+                dosage: { type: Type.STRING, description: "Dosage instructions (e.g., '10mg', 'once a day')." },
+                pharmacyName: { type: Type.STRING, description: "Name of the pharmacy." },
+                pharmacyPhone: { type: Type.STRING, description: "Phone number of the pharmacy." },
+                rxNumber: { type: Type.STRING, description: "The prescription (Rx) number." },
+            },
+        },
+        insurance: {
+             type: Type.OBJECT,
+             properties: {
+                memberName: { type: Type.STRING, description: "The name of the insured member." },
+                memberId: { type: Type.STRING, description: "The member's ID number." },
+                groupNumber: { type: Type.STRING, description: "The group number for the plan." },
+                planName: { type: Type.STRING, description: "The name of the insurance plan." },
+                issuer: { type: Type.STRING, description: "The insurance company that issued the card." },
+                effectiveDate: { type: Type.STRING, description: "The date the policy becomes effective." },
+            },
+        },
+        claims: {
+            type: Type.OBJECT,
+            properties: {
+                patientName: { type: Type.STRING, description: "The name of the patient." },
+                serviceDate: { type: Type.STRING, description: "The date the service was rendered." },
+                providerName: { type: Type.STRING, description: "The name of the healthcare provider or facility." },
+                claimNumber: { type: Type.STRING, description: "The unique claim or reference number." },
+                billedAmount: { type: Type.STRING, description: "The total amount billed for the service." },
+                paidAmount: { type: Type.STRING, description: "The amount paid by the insurer." },
+            },
+        }
+    };
+
+    const formFields = {
+        medical_records: [
+            { key: 'patientName', label: 'Patient Name' }, { key: 'dateOfBirth', label: 'Date of Birth' },
+            { key: 'recordDate', label: 'Record Date' }, { key: 'doctorName', label: "Doctor's Name" },
+            { key: 'diagnosis', label: 'Diagnosis' }, { key: 'notes', label: 'Notes' },
+        ],
+        prescription_refills: [
+            { key: 'patientName', label: 'Patient Name' }, { key: 'medicationName', label: 'Medication' },
+            { key: 'dosage', label: 'Dosage' }, { key: 'pharmacyName', label: 'Pharmacy Name' },
+            { key: 'pharmacyPhone', label: 'Pharmacy Phone' }, { key: 'rxNumber', label: 'Rx Number' },
+        ],
+        insurance: [
+            { key: 'memberName', label: 'Member Name' }, { key: 'memberId', label: 'Member ID' },
+            { key: 'groupNumber', label: 'Group Number' }, { key: 'planName', label: 'Plan Name' },
+            { key: 'issuer', label: 'Issuer' }, { key: 'effectiveDate', label: 'Effective Date' },
+        ],
+        claims: [
+            { key: 'patientName', label: 'Patient Name' }, { key: 'serviceDate', label: 'Date of Service' },
+            { key: 'providerName', label: 'Provider Name' }, { key: 'claimNumber', label: 'Claim Number' },
+            { key: 'billedAmount', label: 'Amount Billed' }, { key: 'paidAmount', label: 'Amount Paid' },
+        ]
+    };
+
+
+    // --- Initial State ---
+    renderForm();
+    resetExtractButton();
+    extractButton.disabled = true;
+    clearButton.disabled = true;
+    docTypeSelector.disabled = true;
+
+    // --- Event Listeners ---
+    fileInput.addEventListener('change', handleFileSelect);
+    clearButton.addEventListener('click', resetAll);
+    extractButton.addEventListener('click', processImage);
+    docTypeSelector.addEventListener('change', handleSchemaChange);
+
+    // --- Functions ---
+    function handleSchemaChange(event) {
+        selectedSchemaType = event.target.value;
+        renderForm(null); // Render the new empty form for the selected type
+    }
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            currentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imagePreview.src = e.target.result;
+                imagePreview.classList.remove('hidden');
+                dropzonePlaceholder.classList.add('hidden');
+                extractButton.disabled = false;
+                clearButton.disabled = false;
+                docTypeSelector.disabled = false;
+                hideError();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function processImage() {
+        if (!currentFile || !API_KEY) return;
+        if (!selectedSchemaType) {
+            showError("Please select a document type before extracting data.");
+            return;
+        }
+        
+        showLoadingState(true);
+        hideError();
+        showLoadingPlaceholder();
+
+        try {
+            const base64Image = await fileToBase64(currentFile);
+            const data = await extractImageData(base64Image, currentFile.type);
+            renderForm(data);
+        } catch (err) {
+            console.error("Error processing image:", err);
+            showError("Failed to extract data from the image. Please try a clearer image or a different document type.");
+            renderForm(); // show empty form again if extraction fails
+        } finally {
+            showLoadingState(false);
+        }
+    }
+
+    function resetAll() {
+        currentFile = null;
+        selectedSchemaType = '';
+        fileInput.value = ''; 
+        imagePreview.src = '#';
+        imagePreview.classList.add('hidden');
+        dropzonePlaceholder.classList.remove('hidden');
+        
+        extractButton.disabled = true;
+        clearButton.disabled = true;
+        
+        docTypeSelector.value = '';
+        docTypeSelector.disabled = true;
+
+        hideError();
+        renderForm();
+    }
+
+    // --- UI Update Functions ---
+    function showLoadingPlaceholder() {
+         formContainer.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full text-slate-400 space-y-4">
+                 <svg class="animate-spin h-8 w-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+                <p>Extracting data from image...</p>
+            </div>
+        `;
+    }
+
+    function renderForm(data) {
+        if (!selectedSchemaType) {
+             formContainer.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400"><p>Select a document type to see the fields.</p></div>`;
+             return;
+        }
+
+        const fields = formFields[selectedSchemaType] || [];
+        const hasData = data && Object.values(data).some(v => v);
+
+        const formHtml = fields.map(field => createFieldHtml(field.key, field.label, data ? data[field.key] : '')).join('');
+
+        formContainer.innerHTML = `
+            <form id="crm-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${formHtml}
+                </div>
+                <div class="pt-4">
+                    <button id="upload-button" type="submit" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-green-700 disabled:bg-slate-500 disabled:cursor-not-allowed transition-all duration-300">
+                        <!-- Button content is set via JS -->
+                    </button>
+                    <p id="upload-status" class="text-sm mt-2 text-center"></p>
+                </div>
+            </form>
+        `;
+        
+        const crmForm = document.getElementById('crm-form');
+        crmForm.addEventListener('submit', handleUploadToCrm);
+        
+        updateUploadButton(hasData ? 'idle' : 'disabled');
+    }
+    
+    function createFieldHtml(key, label, value) {
+        return `
+            <div class="md:col-span-1">
+                <label for="${key}" class="block text-sm font-medium text-slate-300 mb-1">${label}</label>
+                <input type="text" name="${key}" id="${key}" value="${value || ''}" placeholder="${label}"
+                    class="block w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-md shadow-sm placeholder-slate-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            </div>
+        `;
+    }
+
+    async function handleUploadToCrm(event) {
+        event.preventDefault();
+        const button = document.getElementById('upload-button');
+        if (button.disabled) return;
+
+        updateUploadButton('uploading');
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Simulate success/error
+        if (Math.random() > 0.1) { // 90% success rate
+            updateUploadButton('success');
+            setTimeout(resetAll, 3000);
+        } else {
+            updateUploadButton('error');
+        }
+    }
+
+    function updateUploadButton(status) {
+        const button = document.getElementById('upload-button');
+        const statusText = document.getElementById('upload-status');
+        if (!button || !statusText) return;
+
+        button.disabled = status === 'uploading' || status === 'success' || status === 'disabled';
+        statusText.className = 'text-sm mt-2 text-center'; // Reset classes
+
+        switch(status) {
+            case 'uploading':
+                button.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Uploading...`;
+                statusText.textContent = '';
+                break;
+            case 'success':
+                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> Success!`;
+                statusText.textContent = 'Data submitted. Resetting...';
+                statusText.classList.add('text-green-500');
+                break;
+            case 'error':
+                 button.innerHTML = 'Retry Upload';
+                 button.disabled = false;
+                 statusText.textContent = 'Upload failed. Please try again.';
+                 statusText.classList.add('text-red-500');
+                 break;
+            case 'disabled':
+                 button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3.75 18A5.25 5.25 0 009 20.25h6A5.25 5.25 0 0020.25 15m-16.5 0A5.25 5.25 0 019 9.75h.375c.621 0 1.222-.196 1.722-.553a.75.75 0 011.025.215c.34.46.862.788 1.442.946a.75.75 0 00.826-.332c.28-.48.74-.823 1.258-1.002a.75.75 0 01.834.195c.29.324.646.593 1.03.787a.75.75 0 00.938-.285c.228-.41.53-.768.878-1.054A5.25 5.25 0 0015 3.75m-11.25 14.25" /></svg> Upload Data`;
+                 statusText.textContent = 'Extract data from an image to enable upload.';
+                 statusText.classList.add('text-slate-400');
+                 break;
+            case 'idle':
+            default:
+                button.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3.75 18A5.25 5.25 0 009 20.25h6A5.25 5.25 0 0020.25 15m-16.5 0A5.25 5.25 0 019 9.75h.375c.621 0 1.222-.196 1.722-.553a.75.75 0 011.025.215c.34.46.862.788 1.442.946a.75.75 0 00.826-.332c.28-.48.74-.823 1.258-1.002a.75.75 0 01.834.195c.29.324.646.593 1.03.787a.75.75 0 00.938-.285c.228-.41.53-.768.878-1.054A5.25 5.25 0 0015 3.75m-11.25 14.25" /></svg> Upload Data`;
+                statusText.textContent = '';
+                break;
+        }
+    }
+
+    function showLoadingState(isLoading) {
+        extractButton.disabled = isLoading;
+        clearButton.disabled = isLoading;
+        docTypeSelector.disabled = isLoading;
+        if (isLoading) {
+            extractButton.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Analyzing...
+            `;
+        } else {
+            resetExtractButton();
+             if(currentFile) {
+                extractButton.disabled = false;
+                clearButton.disabled = false;
+                docTypeSelector.disabled = false;
+            }
+        }
+    }
+
+    function resetExtractButton() {
+        extractButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5"><path fill-rule="evenodd" d="M9 4.5a.75.75 0 01.75.75V9a.75.75 0 01-1.5 0V5.25A.75.75 0 019 4.5zm6.375 6.375a.75.75 0 000-1.06l-1.06-1.061a.75.75 0 00-1.06 1.06l1.06 1.06a.75.75 0 001.06 0zM4.5 9a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H5.25A.75.75 0 014.5 9zm15-.75a.75.75 0 00-1.06 0l-1.06 1.06a.75.75 0 001.06 1.06l1.06-1.06a.75.75 0 000-1.06zM18 9a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5a.75.75 0 01.75-.75zM12.75 12a.75.75 0 010 1.5H12a.75.75 0 010-1.5h.75zM14.19 15.81a.75.75 0 001.06-1.06l-1.06-1.061a.75.75 0 00-1.06 1.06l1.06 1.06zM9 18a.75.75 0 01.75-.75h3.5a.75.75 0 010 1.5h-3.5A.75.75 0 019 18z" clip-rule="evenodd" /><path d="M12 2.25a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3a.75.75 0 01.75-.75zM2.25 12a.75.75 0 01.75-.75h3a.75.75 0 010 1.5h-3a.75.75 0 01-.75-.75zM12 15.75a.75.75 0 01.75.75v3a.75.75 0 01-1.5 0v-3a.75.75 0 01.75-.75zM15.75 12a.75.75 0 01.75-.75h3a.75.75 0 010 1.5h-3a.75.75 0 01-.75-.75z" /></svg>
+            Extract Information
+        `;
+    }
+
+    function showError(message) {
+        errorText.textContent = message;
+        errorMessage.classList.remove('hidden');
+    }
+
+    function hideError() {
+        errorMessage.classList.add('hidden');
+    }
+
+    // --- Gemini API Service ---
+    async function extractImageData(base64Image, mimeType) {
+        const schema = schemas[selectedSchemaType];
+        if (!schema) {
+            throw new Error(`No schema defined for type: ${selectedSchemaType}`);
+        }
+        
+        const imagePart = { inlineData: { data: base64Image, mimeType: mimeType } };
+        const textPart = { text: `Extract the information from this document. It is a ${selectedSchemaType.replace(/_/g, ' ')}. Identify all fields defined in the schema. If a field is not present, leave it empty.` };
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: { parts: [imagePart, textPart] },
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+            },
+        });
+
+        if (!response.text) {
+            throw new Error("API response was empty.");
+        }
+        return JSON.parse(response.text.trim());
+    }
+
+    // --- Utilities ---
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+</script>
+
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

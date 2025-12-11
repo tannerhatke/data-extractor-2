@@ -1,0 +1,5 @@
+{
+  "name": "Image Data Extractor 2",
+  "description": "An application to import an image, extract text using AI, populate the information into specific fields, and then upload the data.",
+  "requestFramePermissions": []
+}
